@@ -1,19 +1,21 @@
 package com.example.account.dto;
 
-import com.example.account.model.Address;
+import com.example.account.model.City;
 import lombok.*;
+import java.time.LocalDate;
 
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class CustomerDto {
 
-    private String id;
     private String name;
-    private Integer dateOfBirth;
-    private CityDto city;
-    private Address address;
+    private String lastName;
+    private LocalDate dateOfBirth;
+    private String phoneNumber;
+    private String identificationNumber;
+    private String address;
+    private City city;
 
 }

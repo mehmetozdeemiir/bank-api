@@ -25,41 +25,40 @@ public class AccountController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AccountDto> getAccountById(@PathVariable String id) {
+    public ResponseEntity<AccountDto> getAccountById(@PathVariable Long id) {
         return ResponseEntity.ok(accountService.getAccountById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Object> createAccount(
-            @Valid @RequestBody CreateAccountRequest createAccountRequest) {
+    public ResponseEntity<Object> createAccount(@Valid @RequestBody CreateAccountRequest createAccountRequest) {
         return ResponseEntity.ok(accountService.createAccount(createAccountRequest));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AccountDto> updateAccount(@PathVariable String id, @RequestBody UpdateAccountRequest updateAccountRequest) {
+    public ResponseEntity<AccountDto> updateAccount(@PathVariable Long id, @RequestBody UpdateAccountRequest updateAccountRequest) {
         return ResponseEntity.ok(accountService.updateAccount(id, updateAccountRequest));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAccount(@PathVariable String id) {
+    public ResponseEntity<Void> deleteAccount(@PathVariable Long id) {
         accountService.deleteAccount(id);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/withdraw/{id}/{amount}")
-    public ResponseEntity<AccountDto> withdrawMoney(@PathVariable String id, @PathVariable Double amount) {
+    public ResponseEntity<AccountDto> withdrawMoney(@PathVariable Long id, @PathVariable Long amount) {
         return ResponseEntity.ok(accountService.withdrawMoney(id, amount));
     }
 
-    @PutMapping("/add/{id}/{amount}")
-    public ResponseEntity<AccountDto> addMoney(@PathVariable String id, @PathVariable Double amount) {
+    @PutMapping("/addMoney/{id}/{amount}")
+    public ResponseEntity<AccountDto> addMoney(@PathVariable Long id, @PathVariable Long amount) {
         return ResponseEntity.ok(accountService.addMoney(id, amount));
     }
 
     @PutMapping("/transfer")
-    public ResponseEntity<String> transferMoney(@RequestBody MoneyTransferRequest transferRequest) {
+    public ResponseEntity<Void> transferMoney(@Valid @RequestBody MoneyTransferRequest transferRequest) {
         accountService.transferMoney(transferRequest);
-        return ResponseEntity.ok("İşleminiz başarıyla alınmıştır!");
+        return ResponseEntity.ok().build();
     }
 
 }

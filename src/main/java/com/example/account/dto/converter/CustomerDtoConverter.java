@@ -1,23 +1,33 @@
 package com.example.account.dto.converter;
 
-import com.example.account.dto.CityDto;
 import com.example.account.dto.CustomerDto;
 import com.example.account.model.Customer;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 @Component
+@Data
+@RequiredArgsConstructor
 public class CustomerDtoConverter {
 
-    public CustomerDto convert(Customer customer) {
-        CustomerDto customerDto = new CustomerDto();
-        customerDto.setId(customer.getId());
-        customerDto.setAddress(customer.getAddress());
-        customerDto.setCity(CityDto.valueOf(customer.getCity().name()));
-        customerDto.setName(customer.getName());
-        customerDto.setDateOfBirth(customer.getDateOfBirth());
-        return customerDto;
-    }
+    private final CustomerAccountDtoConverter customerAccountDtoConverter;
+
+   public CustomerDto convert(Customer customer){
+       return new CustomerDto(
+               customer.getName(),
+               customer.getLastName(),
+               customer.getDateOfBirth(),
+               customer.getPhoneNumber(),
+               customer.getIdentificationNumber(),
+               customer.getAddress(),
+               customer.getCity());
+   }
 
    /*
 

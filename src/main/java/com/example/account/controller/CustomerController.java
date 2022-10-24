@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -22,7 +24,7 @@ public class CustomerController {
     }
 
     @PostMapping
-    public ResponseEntity<CustomerDto> createCustomer(@RequestBody CreateCustomerRequest customerRequest){
+    public ResponseEntity<CustomerDto> createCustomer(@Valid @RequestBody CreateCustomerRequest customerRequest){
         return ResponseEntity.ok(customerService.createCustomer(customerRequest));
     }
 
@@ -32,18 +34,18 @@ public class CustomerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerDto> getCustomerById(@PathVariable String id){
+    public ResponseEntity<CustomerDto> getCustomerById(@PathVariable Long id){
         return ResponseEntity.ok(customerService.getCustomerDtoById(id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCustomer(@PathVariable String id){
+    public ResponseEntity<Void> deleteCustomer(@PathVariable Long id){
         customerService.deleteCustomer(id);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CustomerDto> updateCustomer(@PathVariable String id,
+    public ResponseEntity<CustomerDto> updateCustomer(@PathVariable Long id,
                                                       @RequestBody UpdateCustomerRequest customerRequest) {
         return ResponseEntity.ok(customerService.updateCustomer(id, customerRequest));
     }

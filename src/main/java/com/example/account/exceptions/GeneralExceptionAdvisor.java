@@ -32,7 +32,10 @@ public class GeneralExceptionAdvisor extends ResponseEntityExceptionHandler {
     public ResponseEntity<?> customerNotFoundExceptionHandler(CustomerNotFoundException exception)  {
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
     }
-
+    @ExceptionHandler(AccountNotFoundException.class)
+    public ResponseEntity<?> accountNotFoundExceptionHandler(AccountNotFoundException exception)  {
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
+    }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> generalExceptionHandler(Exception exception) {
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
