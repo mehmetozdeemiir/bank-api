@@ -15,6 +15,7 @@ public class AccountDtoConverter {
 
    public AccountDto convert(Account account){
        return new AccountDto(
+               account.getId(),
                account.getBalance(),
                account.getCurrency(),
                account.getIban(),

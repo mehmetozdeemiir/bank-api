@@ -7,13 +7,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AccountCustomerDto {
+public class AccountCustomerDto implements Serializable {
     private String name;
     private String lastName;
     @DateTimeFormat(pattern = "dd.MM.yyyy")

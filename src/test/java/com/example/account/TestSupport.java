@@ -47,6 +47,7 @@ public class TestSupport {
                 .currency(accountRequest.getCurrency())
                 .bankBranch(accountRequest.getBankBranch())
                 .city(accountRequest.getCity())
+                .customer(generateCustomer())
                 .build();
     }
 

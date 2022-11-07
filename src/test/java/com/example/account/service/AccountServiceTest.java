@@ -49,11 +49,12 @@ public class AccountServiceTest extends TestSupport {
         Customer customer=generateCustomer();
         Account account=generateAccount(createAccountRequest);
         AccountDto accountDto=generateAccountDto();
-
+        //when
         Mockito.when(customerService.getCustomerById(1L)).thenReturn(customer);
         Mockito.when(accountRepository.save(account)).thenReturn(account);
         Mockito.when(accountDtoConverter.convert(account)).thenReturn(accountDto);
 
+        //then
         AccountDto result = accountService.createAccount(createAccountRequest);
 
         Assert.assertEquals(result, accountDto);

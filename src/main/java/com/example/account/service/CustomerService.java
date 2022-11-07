@@ -10,7 +10,6 @@ import com.example.account.model.Customer;
 import com.example.account.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,16 +21,16 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerDtoConverter customerDtoConverter;
 
-    public CustomerDto createCustomer(CreateCustomerRequest customerRequest){
-            Customer customer=customerRepository.save(Customer.builder()
-                    .name(customerRequest.getName())
-                    .lastName(customerRequest.getLastName())
-                    .dateOfBirth(customerRequest.getDateOfBirth())
-                    .phoneNumber(customerRequest.getPhoneNumber())
-                    .identificationNumber(customerRequest.getIdentificationNumber())
-                    .address(customerRequest.getAddress())
-                    .city(customerRequest.getCity())
-                    .build());
+    public CustomerDto createCustomer(CreateCustomerRequest customerRequest) {
+        Customer customer = customerRepository.save(Customer.builder()
+                .name(customerRequest.getName())
+                .lastName(customerRequest.getLastName())
+                .dateOfBirth(customerRequest.getDateOfBirth())
+                .phoneNumber(customerRequest.getPhoneNumber())
+                .identificationNumber(customerRequest.getIdentificationNumber())
+                .address(customerRequest.getAddress())
+                .city(customerRequest.getCity())
+                .build());
         return customerDtoConverter.convert(customer);
 
     }
@@ -42,7 +41,7 @@ public class CustomerService {
 
     public CustomerDto getCustomerDtoById(Long id) {
         Optional<Customer> customerOptional = customerRepository.findById(id);
-        return customerOptional.map(customerDtoConverter::convert).orElseThrow(()->new CustomerNotFoundException("Customer Not Found"));
+        return customerOptional.map(customerDtoConverter::convert).orElseThrow(() -> new CustomerNotFoundException("Customer Not Found"));
     }
 
     public void deleteCustomer(Long id) {
@@ -60,11 +59,11 @@ public class CustomerService {
             customer.setAddress(customerRequest.getAddress());
             customerRepository.save(customer);
         });
-        return customerOptional.map(customerDtoConverter::convert).orElseThrow(()->new CustomerNotFoundException("Customer Not Found"));
+        return customerOptional.map(customerDtoConverter::convert).orElseThrow(() -> new CustomerNotFoundException("Customer Not Found"));
     }
 
-    protected Customer getCustomerById(Long id){
-        return customerRepository.findById(id).orElseThrow(()->new CustomerNotFoundException("Customer Not Found"));
+    protected Customer getCustomerById(Long id) {
+        return customerRepository.findById(id).orElseThrow(() -> new CustomerNotFoundException("Customer Not Found"));
     }
 
 }
