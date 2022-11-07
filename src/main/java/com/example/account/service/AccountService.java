@@ -13,13 +13,14 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +32,7 @@ public class AccountService {
     private final AccountDtoConverter accountDtoConverter;
     private final DirectExchange exchange; //configdeki beanden geliyor
     private final AmqpTemplate rabbitTemplate; //rabbitmqda ilk queue topiğe değer yazabilmek için kullanılıyor amqptemplate( obje convert ediyor rabbitmq json olarak basmayı sağlıyor)
-    private final KafkaTemplate<String , String> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Value("${sample.rabbitmq.routingKey}")
     String routingKey;
@@ -39,6 +40,7 @@ public class AccountService {
     @Value("${sample.rabbitmq.queue}")
     String queueName;
 
+    @CachePut(value = "accounts")//yeni data ekliyor cache'e
     public AccountDto createAccount(CreateAccountRequest createAccountRequest) {
         Customer customer = customerService.getCustomerById(createAccountRequest.getCustomerId());
         if (Objects.isNull(customer.getId())) {
@@ -56,7 +58,7 @@ public class AccountService {
     }
 
 
-    // bi bak
+    @CacheEvict(value = "accounts", allEntries = true)//cachedeki datayı update etmek zor, cachedekı bir data update edilmek istendiğinde bütün cache silinir. bir sonraki get all isleminden sonra tekrar data guncel oluyor(update edilmis data ile tüm liste geliyor.!en güvenilir yöntem!)
     public AccountDto updateAccount(Long id, UpdateAccountRequest request) {
         Customer customer = customerService.getCustomerById(request.getCustomerId());
         if (Objects.isNull(customer.getId())) {
@@ -71,20 +73,19 @@ public class AccountService {
             account.setCustomer(customer);
             accountRepository.save(account);
         });
-        return accountOptional.map(accountDtoConverter::convert).orElseThrow(()->new AccountNotFoundException("Account not found."));
+        return accountOptional.map(accountDtoConverter::convert).orElseThrow(() -> new AccountNotFoundException("Account not found."));
     }
 
-
-    //@Cacheable(value="accounts",key = "#id")
-    public List<AccountDto> getAllAccountsDto() {
+    @Cacheable(value = "accounts")
+    public List<AccountDto> getAllAccounts(){
         return accountRepository.findAll().stream().map(accountDtoConverter::convert).toList();
     }
 
-
     public AccountDto getAccountById(Long id) {
-        return accountRepository.findById(id).map(accountDtoConverter::convert).orElseThrow(()->new AccountNotFoundException("Account not found."));
+        return accountRepository.findById(id).map(accountDtoConverter::convert).orElseThrow(() -> new AccountNotFoundException("Account not found."));
     }
 
+    @CacheEvict(value = "accounts", allEntries = true)
     public void deleteAccount(Long id) {
         accountRepository.deleteById(id);
     }
@@ -101,10 +102,6 @@ public class AccountService {
     }
 
 
-
-
-
-
     public AccountDto withdrawMoney(Long id, Long amount) {
         Optional<Account> accountOptional = accountRepository.findById(id);
         accountOptional.ifPresentOrElse(account -> {
@@ -112,8 +109,10 @@ public class AccountService {
                         account.setBalance(account.getBalance() - amount);
                         accountRepository.save(account);
                     } else {
-                        log.error("Insufficient funds -> accountId: " + id + " balance: " + account.getBalance() + " amount: " + amount); } },
-                    () -> log.error("Account not found"));
+                        log.error("Insufficient funds -> accountId: " + id + " balance: " + account.getBalance() + " amount: " + amount);
+                    }
+                },
+                () -> log.error("Account not found"));
         return accountOptional.map(accountDtoConverter::convert).orElseThrow(() -> new AccountNotFoundException("Account Not Found"));
     }
 
@@ -135,33 +134,33 @@ public class AccountService {
                         rabbitTemplate.convertAndSend(exchange.getName(), "secondRoute", transferRequest);
                     } else {
                         log.error("Insufficient funds -> accountId: " + transferRequest.getFromId() + " balance: " + account.getBalance() + " amount: " + transferRequest.getAmount());
-                    }},
+                    }
+                },
                 () -> {
                     log.error("Account not found");
                     throw new AccountNotFoundException("Account Not Found");
-        });
+                });
     }
-
 
 
     @RabbitListener(queues = "secondStepQueue")
     public void updateReceiverAccount(MoneyTransferRequest transferRequest) {
         Optional<Account> accountOptional = accountRepository.findById(transferRequest.getToId());//alıcı hesabı aldı
         accountOptional.ifPresentOrElse(account -> {
-            if (transferRequest.getIban()!=null && transferRequest.getIban().equals(account.getIban())){
-                account.setBalance(account.getBalance() + transferRequest.getAmount());
-                accountRepository.save(account);
-                rabbitTemplate.convertAndSend(exchange.getName(), "thirdRoute", transferRequest);
-            }
-            else{
-                log.error("Iban does not belong to this person");
-                Optional<Account> senderAccount = accountRepository.findById(transferRequest.getFromId());
-                senderAccount.ifPresent(sender -> {
-                    log.info("Money charge back to sender");
-                    sender.setBalance(sender.getBalance() + transferRequest.getAmount());
-                    accountRepository.save(sender);
-                });
-            }},
+                    if (transferRequest.getIban() != null && transferRequest.getIban().equals(account.getIban())) {
+                        account.setBalance(account.getBalance() + transferRequest.getAmount());
+                        accountRepository.save(account);
+                        rabbitTemplate.convertAndSend(exchange.getName(), "thirdRoute", transferRequest);
+                    } else {
+                        log.error("Iban does not belong to this person");
+                        Optional<Account> senderAccount = accountRepository.findById(transferRequest.getFromId());
+                        senderAccount.ifPresent(sender -> {
+                            log.info("Money charge back to sender");
+                            sender.setBalance(sender.getBalance() + transferRequest.getAmount());
+                            accountRepository.save(sender);
+                        });
+                    }
+                },
                 () -> {
                     log.error("Receiver Account not found");
                     Optional<Account> senderAccount = accountRepository.findById(transferRequest.getFromId());
@@ -174,28 +173,24 @@ public class AccountService {
     }
 
 
-
     @RabbitListener(queues = "thirdStepQueue")
     public void finalizeTransfer(MoneyTransferRequest transferRequest) {
         Optional<Account> accountOptional = accountRepository.findById(transferRequest.getFromId());
         accountOptional.ifPresentOrElse(account ->
-                {
-                    String notificationMessage = "Dear customer %s \n  Your money transfer request has been succed. Your new balance is %s";
-                    log.info("Sender(" + account.getId() + ") new account balance: " + account.getBalance());
-                    String senderMessage= String.format(notificationMessage,account.getId(), account.getBalance());
-                    kafkaTemplate.send("transfer-notification",senderMessage);
-                },() -> log.error("Account not found"));
+        {
+            String notificationMessage = "Dear customer %s \n  Your money transfer request has been succed. Your new balance is %s";
+            log.info("Sender(" + account.getId() + ") new account balance: " + account.getBalance());
+            String senderMessage = String.format(notificationMessage, account.getId(), account.getBalance());
+            kafkaTemplate.send("transfer-notification", senderMessage);
+        }, () -> log.error("Account not found"));
 
-        Optional<Account> accountToOptional =accountRepository.findById(transferRequest.getToId());
+        Optional<Account> accountToOptional = accountRepository.findById(transferRequest.getToId());
         accountToOptional.ifPresentOrElse(account ->
-                {
-                    String notificationMessage = "Dear customer %s \n You received a money transfer from %s. Your new balance is %s";
-                    System.out.println("Receiver(" + account.getId() +") new account balance: " + account.getBalance());
-                    String receiverMessage = String.format(notificationMessage, account.getId(), transferRequest.getFromId(), account.getBalance());
-                    kafkaTemplate.send("transfer-notification",  receiverMessage);
-                }, () -> log.error("Account not found"));
+        {
+            String notificationMessage = "Dear customer %s \n You received a money transfer from %s. Your new balance is %s";
+            System.out.println("Receiver(" + account.getId() + ") new account balance: " + account.getBalance());
+            String receiverMessage = String.format(notificationMessage, account.getId(), transferRequest.getFromId(), account.getBalance());
+            kafkaTemplate.send("transfer-notification", receiverMessage);
+        }, () -> log.error("Account not found"));
     }
-
-
-
 }
